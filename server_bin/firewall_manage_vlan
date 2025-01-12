@@ -1,0 +1,61 @@
+#! /usr/bin/env bash
+
+cmd=$1
+netname=$2
+vlan_exists=$(docker network ls | grep $netname | wc -l)
+
+if [ $cmd == 'create' ];
+then	
+	net=$3
+	vlan=$4
+	if [ $vlan_exists -eq 1 ];
+	then
+		echo "Error $netname exists"
+		exit 1
+	fi
+	docker network create -d ipvlan --subnet=$net -o parent=$vlan $netname > /dev/null 2>&1
+	if [ $? -eq 0 ];
+	then	
+		docker network connect $netname rest-firewall-1 > /dev/null 2>&1
+		echo "Success inserting $netname"
+		exit 0
+	else
+		echo "Error inserting $netname"
+		exit 1
+	fi
+elif [[ $cmd == 'delete' || $cmd == 'update' ]];
+then
+	if [ $vlan_exists -eq 0 ];
+	then
+		echo "Error $netname does not exists"
+		exit 1
+	fi
+	docker network disconnect $netname rest-firewall-1 > /dev/null 2>&1
+	docker network rm $netname > /dev/null 2>&1 
+	if [ $? -eq 0 ];
+	then
+		echo "Success deleting $netname"
+		if [ $cmd == 'update' ];
+		then
+			net=$3
+			vlan=$4
+			docker network create -d ipvlan --subnet=$net -o parent=$vlan $netname > /dev/null 2>&1
+			if [ $? -eq 0 ];
+			then	
+				docker network connect $netname rest-firewall-1 > /dev/null 2>&1
+				echo "Success inserting $netname"
+				exit 0
+			else
+				echo "Error inserting $netname"
+				exit 1
+			fi
+		fi
+		exit 0
+				
+	else
+		echo "Error deleting $netname"
+		exit 1
+	fi
+fi
+
+

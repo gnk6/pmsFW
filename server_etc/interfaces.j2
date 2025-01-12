@@ -1,0 +1,31 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+auto br0
+iface br0 inet static
+    address {{ server_br0 }}
+    gateway {{ server_gw }}
+    bridge-ports {{ br0_physical_int }}
+	dns-nameservers 8.8.8.8
+	bridge-stp off
+	bridge-fb 0
+
+
+auto br1
+iface br1 inet manual
+    bridge-ports {{ br1_physical_int }}
+	bridge-stp off
+	bridge-fd 0
+
+auto br2
+iface br2 inet static
+	address 169.254.100.1/29
+	bridge-ports none
+	bridge-stp off
+	bridge-fd 0

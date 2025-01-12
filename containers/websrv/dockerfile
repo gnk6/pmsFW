@@ -1,0 +1,47 @@
+FROM debian:latest
+
+RUN apt-get update && \
+    apt-get install -y \
+            python3 \
+            python3-pip \
+            python3-venv \
+            apache2 \
+            libapache2-mod-wsgi-py3 \
+	    vim \
+	    procps &&\
+    apt-get clean
+RUN a2enmod wsgi
+
+RUN a2enmod ssl 
+
+RUN a2enmod headers 
+
+RUN a2enmod rewrite
+
+COPY openssl /etc/apache_certs
+
+#Generate apache certificates
+RUN openssl req -newkey rsa:2048 -keyout /etc/apache_certs/firewall.key -out /etc/apache_certs/firewall.csr -config /etc/apache_certs/openssl.cnf -nodes
+
+RUN openssl x509 -signkey /etc/apache_certs/firewall.key -in /etc/apache_certs/firewall.csr -req -days 365 -out /etc/apache_certs/firewall.crt
+
+RUN openssl req -x509 -sha256 -days 1825 -newkey rsa:2048 -keyout /etc/apache_certs/rootCA.key -out /etc/apache_certs/rootCA.crt -config /etc/apache_certs/opensslroot.cnf -nodes
+
+RUN openssl x509 -req -CA /etc/apache_certs/rootCA.crt -CAkey /etc/apache_certs/rootCA.key -in /etc/apache_certs/firewall.csr -out /etc/apache_certs/firewall.crt -days 365 -CAcreateserial -extfile /etc/apache_certs/firewall.ext
+
+COPY apache.conf  /etc/apache2/sites-enabled/000-default.conf
+
+RUN python3 -m venv /var/www/html/.venv
+
+COPY requirements.txt /var/www/html/.venv/requirements.txt
+
+COPY wgui/index.html /var/www/html/index.html
+
+RUN /var/www/html/.venv/bin/python3 -m pip install -r /var/www/html/.venv/requirements.txt
+
+COPY web.py /var/www/html/
+
+RUN chown -R www-data:www-data /var/www/html
+
+CMD ["apachectl", "-D", "FOREGROUND"]
+

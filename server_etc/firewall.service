@@ -1,0 +1,17 @@
+[Unit]
+Description=Firewall service
+After=docker.service
+Requires=docker.service
+After=network.target
+
+[Service]
+ExecStartPre=-/usr/local/bin/firewall_prune
+ExecStart=/usr/local/bin/firewall_start 
+Type=Forking
+PIDFile=/var/run/firewall.pid
+
+ExecStop=/usr/local/bin/firewall_stop
+ExecStopPost=/usr/local/bin/firewall_prune
+
+[Install]
+WantedBy=default.target

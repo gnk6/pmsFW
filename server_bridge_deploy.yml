@@ -1,0 +1,23 @@
+---
+- name: Deploy server's bridge interfaces
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Configure nameserver
+      copy:
+        src: server_etc/resolv.conf
+        dest: /etc/resolv.conf
+        mode: 0644
+    - name: Install bridge-utils
+      apt:
+        name: bridge-utils
+        state: present
+    - name: Copy interfaces file
+      template:
+        src: server_etc/interfaces.j2
+        dest: /etc/network/interfaces
+        owner: root
+        group: root
+        mode: 0644
+    - name: Reboot server
+      reboot:

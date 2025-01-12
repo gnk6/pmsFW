@@ -1,0 +1,2 @@
+#! /usr/bin/env bash
+/usr/bin/docker compose -f /firewall/docker-compose.yaml up

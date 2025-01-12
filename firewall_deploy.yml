@@ -1,0 +1,105 @@
+---
+- name: Deploy containerized Firewall
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Copy executables
+      copy:
+       src: "{{ item }}"
+       dest: /usr/local/bin/
+       mode: 0777
+      loop:
+        - server_bin/firewall_manage_vlan
+        - server_bin/firewall_prune
+        - server_bin/firewall_start
+        - server_bin/firewall_stop
+        - server_bin/repo.sh
+    - name: Run docker repo script
+      command: /usr/local/bin/repo.sh
+    - name: Update and upgrade apt
+      apt:
+        upgrade: true
+        update_cache: true
+    - name: Create work directory
+      file:
+        path: /firewall/
+        state: directory
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - docker-buildx-plugin
+        - docker-ce-cli
+        - docker-ce-rootless-extras
+        - docker-ce
+        - docker-compose-plugin
+        - python3-venv
+        - iproute2
+    - name: Manage docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+    - name: Copy container directories
+      copy:
+        src: "{{ item }}"
+        dest: /firewall/
+      loop:
+        - containers/websrv
+        - containers/local_api
+        - containers/firewall
+    - name: Copy templates
+      template:
+        src: "{{ item.source }}"
+        dest: "{{ item.destination }}"
+        mode: "{{ item.perm }}"
+      loop:
+        - source: server_bin/firewall_failover.j2
+          destination: /usr/local/bin/firewall_failover
+          perm: 0777
+        - source: containers/docker-compose.yaml.j2
+          destination: /firewall/docker-compose.yaml
+          perm: 0644
+        - source: containers/firewall/entrypoint.sh
+          destination: /firewall/firewall/entrypoint.sh
+          perm: 0644
+        - source: containers/firewall/code/init.env
+          destination: /firewall/firewall/code/init.env
+          perm: 0644
+        - source: containers/firewall/code/db.env
+          destination: /firewall/firewall/code/db.env
+          perm: 0644
+        - source: containers/firewall/code/iptables_gen.py
+          destination: /firewall/firewall/code/iptables_gen.py
+          perm: 0777
+        - source: containers/websrv/web.py
+          destination: /firewall/websrv/web.py
+          perm: 0777
+    - name: Create venv
+      command:
+        cmd: python3 -m venv apienv
+        chdir: /firewall/local_api
+    - name: Install python modules
+      pip:
+        requirements: /firewall/local_api/requirements.txt
+        virtualenv: /firewall/local_api/apienv
+    - name: Copy unit files
+      copy:
+        src: "{{ item }}"
+        dest: /usr/lib/systemd/system/
+        mode: 0644
+      loop:
+        - server_etc/cnetapi.service
+        - server_etc/firewall_failover.service
+        - server_etc/firewall.service
+    - name: Start firewall services
+      service:
+        name: "{{ item }}"
+        daemon-reload: true
+        state: started
+        enabled: true
+      loop:
+        - cnetapi.service
+        - firewall_failover.service
+        - firewall.service

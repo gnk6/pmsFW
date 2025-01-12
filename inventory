@@ -1,0 +1,17 @@
+[firewalls]
+DebianServer
+
+[firewalls:vars]
+server_br0='10.0.48.58/24'
+server_gw='10.0.48.1'
+br0_physical_int='ens18'
+br1_physical_int='ens19'
+fw_pnet_ip='10.0.48.154'
+fw_lnet_ip='192.168.0.1'
+psql_user='pqluser'
+psql_pass='psqlpass'
+pnet_subnet='10.0.48.0/24'
+lnet_subnet='192.168.0.0/24'
+lnet_gw='192.168.0.254'
+
+

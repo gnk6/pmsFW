@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+container_list=$(/usr/bin/docker ps -a | grep 'rest' | awk '{ print $1 }')
+for cont in $container_list;
+do
+	/usr/bin/docker rm -f $cont 1> /dev/null;
+done
+vlan_list=$(/usr/bin/docker network ls | grep ipvlan | awk '{ print $1 }')
+for vlan in $vlan_list;
+do
+	/usr/bin/docker network rm $vlan > /dev/null 2>&1
+done
+/usr/bin/docker network rm public_net > /dev/null 2>&1
+/usr/bin/docker network rm private_net > /dev/null 2>&1
+/usr/bin/docker network rm container_net > /dev/null 2>&1
+
+exit 0

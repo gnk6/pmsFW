@@ -1,0 +1,42 @@
+#! /usr/bin/env bash
+if [ $2 ];
+then
+	source /firewall/init.env
+else
+	source /firewall/db.env
+	if [ "$1" = "get_vlan" ];
+	then	
+		counter=0
+		count_list=() ##Create a list with the numbers of vlans in the system
+		vlanid_list=() ##Create an array for the vlan ids, e.g. vlan_10, vlan_20
+		for vlan in $(/usr/bin/env | grep vlan_ | awk -F '=' '{ print $1 }');
+		do	counter=$(( counter+1 ))
+			count_list+=($counter)
+			vlanid_list+=($vlan)
+		done
+		for i in ${count_list[@]};
+		do 
+			j=$i-1; var=${vlanid_list[$j]} ##Add it to a single variable in order to call the env var from it
+			vlan_ip=$(ip a | grep ${!var} | awk '{ print $NF }')
+			echo "$var:$vlan_ip" ##Return each vlan with its actual interface			
+		done
+	fi
+	if [ "$1" = "get_provider" ];
+	then
+		echo $(/usr/sbin/ip route | grep default  | awk '{ print $5 }')
+	fi
+fi
+pub=$(ip a |grep -B2 $WAN | head -n1 | awk -F '@' '{ print $1 }' | awk '{ print $2 }')
+local=$(ip a |grep -B2 $LAN | head -n1 | awk -F '@' '{ print $1 }' | awk '{ print $2 }')
+cont=$(ip a|grep -B2 $CAN | head -n1 | awk -F '@' '{ print $1 }' | awk '{ print $2 }')
+if [ $1 == 'ip' ];
+then
+	printf "$WAN\n$LAN\n$CAN"
+elif [ $1 == 'gw' ];
+then
+	printf "$GW"
+
+elif [ $1 == 'iface' ];
+then
+	printf "$pub\n$local\n$cont"
+fi

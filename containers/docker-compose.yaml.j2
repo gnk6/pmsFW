@@ -1,0 +1,79 @@
+name: rest
+services:
+  firewall:
+    hostname: firewall
+    image: firewall
+    build: ./firewall/
+    volumes:
+      - 'firewall-data:/firewall/'
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+    networks:
+      public_net:
+        ipv4_address: {{ fw_pnet_ip }}
+      private_net:
+        ipv4_address: {{ fw_lnet_ip }}
+      container_net:
+        ipv4_address: 169.254.100.2
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+  database:
+    hostname: database
+    image: postgres:15
+    environment:
+      - POSTGRES_USER={{ psql_user }}
+      - POSTGRES_PASSWORD={{ psql_pass }}
+      - POSTGRES_DB=firewalldb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - 'db-data:/var/lib/postgresql/data'
+    networks:
+      container_net:
+        ipv4_address: 169.254.100.3
+  apache:
+    hostname: apache
+    build: ./websrv/
+    depends_on:
+      database:
+        condition: service_healthy
+        restart: true
+    networks:
+      container_net:
+        ipv4_address: 169.254.100.4
+networks:
+  public_net:
+    name: public_net
+    driver: macvlan
+    driver_opts:
+      parent: br0
+    ipam:
+      config:
+        - subnet: {{ pnet_subnet }}
+          gateway: {{ server_gw }}
+  private_net:
+    name: private_net
+    driver: macvlan
+    driver_opts:
+      parent: br1
+    ipam:
+      config:
+        - subnet: {{ lnet_subnet }}
+          gateway: {{ lnet_gw }}
+  container_net:
+    name: container_net
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: "br2"
+    ipam:
+      config:
+        - subnet: 169.254.100.0/29
+volumes:
+  firewall-data:
+  db-data:

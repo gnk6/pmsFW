@@ -1,0 +1,7 @@
+#! /usr/bin/env bash
+
+container_list=$(/usr/bin/docker ps | grep 'rest' | awk '{ print $1 }')
+for cont in $container_list;
+do
+	/usr/bin/docker stop $cont 1> /dev/null;
+done

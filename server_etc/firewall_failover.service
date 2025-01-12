@@ -1,0 +1,12 @@
+[Unit]
+Description=Alter net config of system (sibling with firewall.service)
+After=firewall.service
+Requires=firewall.service
+
+[Service]
+ExecStart=/usr/local/bin/firewall_failover 
+Type=Forking
+PIDFile=/var/run/firewall_failover.pid
+
+[Install]
+WantedBy=default.target

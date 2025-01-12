@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CFireWall</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 90%;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .title {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .btn {
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-add {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .btn-delete {
+      background-color: #f44336;
+      color: white;
+    }
+    .btn-update {
+      background-color: #ffa500;
+      color: white;
+    }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      border: 1px solid #0e0d0d;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 1000;
+    }
+    .popup-header {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .popup form {
+      display: flex;
+      flex-direction: column;
+    }
+    .popup input {
+      margin-bottom: 10px;
+      padding: 5px;
+    }
+    .popup button {
+      margin-top: 10px;
+      padding: 5px;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      display: none;
+    }
+  .modal {
+    display: none; 
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-content {
+    margin-bottom: 20px;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .modal-footer .btn {
+    margin-left: 10px;
+  }
+  .spinner-container {
+    position: relative;
+}
+
+#loadingSpinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; 
+    text-align: center;
+}
+
+#loadingSpinnerDel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white; 
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #loadingSpinnerDel p {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+  }
+
+
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Containerized FireWall</h1>
+
+    <!-- Interfaces Table -->
+    <h2>Interfaces</h2>
+    <button class="btn btn-add" onclick="showPopup('interfacesTable')">Add Interface</button>
+    <table id="interfacesTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Parent</th>
+          <th>Type</th>
+          <th>IP</th>
+          <th>Provider</th>
+          <th>Gateway</th>
+          <th>Priority</th>
+          <th>DHCP</th>
+          <th>DHCP Start</th>
+          <th>DHCP End</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+
+    <!-- Static Routes Table -->
+    <h2>Static Routes</h2>
+    <button class="btn btn-add" onclick="showPopup('staticRoutesTable')">Add Static Route</button>
+    <table id="staticRoutesTable">
+      <thead>
+        <tr>
+          <th>Network</th>
+          <th>Interface</th>
+          <th>Gateway IP</th>
+          <th>Masquerade</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+        <!-- Firewall Rules Table -->
+    <h2>Firewall Rules</h2>
+    <button class="btn btn-add" onclick="showPopup('firewallTable')">Add New Rule</button>
+    <table id="firewallTable">
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Action</th>
+          <th>Protocol</th>
+          <th>Src Interface</th>
+          <th>Dst Interface</th>
+          <th>Src IP</th>
+          <th>Dest IP</th>
+          <th>Src Port</th>
+          <th>Dst Port</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+  
+
+<!-- Popup Modal Structure -->
+<div id="popupModal" class="modal">
+  <div class="modal-content">
+    <h4>Add New Entry</h4>
+    <form id="popupForm">
+    </form>
+  </div>
+  <div class="spinner-container">
+    <div class="modal-footer">
+      <button id="submitPopup" class="btn">Submit</button>
+      <button id="cancelPopup" class="btn">Cancel</button>
+      <div id="loadingSpinnerPopup" style="display:none;">
+        <p>Loading...</p> 
+      </div>
+    </div>
+  </div>
+</div>
+<div id="editModalup" class="modal">
+  <div class="modal-content">
+    <h4>Edit entry</h4>
+    <form id="editFormup">
+    </form>
+  </div>
+  <div class="spinner-container">
+    <div class="modal-footer">
+      <button id="submitEdit" class="btn">Submit</button>
+      <button id="cancelEdit" class="btn">Cancel</button>
+      <div id="loadingSpinner" style="display:none;">
+        <p>Loading...</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="loadingOverlay">
+  <div id="loadingSpinnerDel" style="display:none;">
+    <p>Loading...</p>
+  </div>
+</div>
+  <script>
+   var interfaces_obj ={}
+   var routes_obj={}
+   var rules_obj ={}
+    async function populateTable(tableId) {
+      const endpoint = get_endpoint(tableId)
+      try {
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error(`Error fetching data: ${response.statusText}`);
+        //Empty lists 
+        let data = await response.json();
+        const tableBody = document.getElementById(tableId).getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = '';
+        for (let i=0; i<data.length; i++){
+          const dbdata = data[i]
+          let rdata = data_list_to_insert(tableId,dbdata)
+          populate_data_object(tableId,dbdata,rdata);
+          data.splice(i,1,rdata)
+        }
+        data.forEach(rowData => {
+          const row = tableBody.insertRow();
+          Object.values(rowData).forEach(value => {
+            if (String(value).indexOf(tableId) != -1){
+              return; //Do not populate cell with ID
+            }
+            const cell = row.insertCell();
+            cell.textContent = value;
+          });
+          const actionsCell = row.insertCell();
+          if (rowData['ID'].includes("interfaces") && (rowData['Name'] =='eth0' || rowData['Name']=='eth1')){
+            actionsCell.innerHTML = `
+              <button class="btn btn-update" onclick="updateRow(this)" id="u_${rowData['ID']}">Update</button>
+            `;
+          }
+          else if (rowData['ID'].includes("interfaces") &&  rowData['Name']=='cnet'){}
+          else {
+            actionsCell.innerHTML = `
+              <button class="btn btn-update" onclick="updateRow(this)" id="u_${rowData['ID']}">Update</button>
+              <button class="btn btn-delete" onclick="deleteRow(this)"  id="d_${rowData['ID']}">Delete</button>
+              `;
+          }
+        });
+      } catch (error) {
+        console.error(`Failed to populate ${tableId}:`, error);
+      }
+    }
+
+
+    function showPopup(tableId) {
+      const popup = document.getElementById('popupModal');
+      const form = document.getElementById('popupForm');
+
+      form.innerHTML = '';
+      const headers = document.getElementById(tableId).getElementsByTagName('thead')[0].rows[0].cells;
+
+      for (let i = 0; i < headers.length - 1; i++) {
+        const fieldName = headers[i].textContent;
+        form.innerHTML += popfield(fieldName);
+      }
+      popup.style.display = 'block';
+      form.style.display='block';
+      popupButton= document.getElementById("submitPopup")
+      popupButton.setAttribute('onclick',`submitForm(${tableId})`);
+      cancelButton=document.getElementById("cancelPopup")
+      cancelButton.setAttribute('onclick',`cancelForm(${tableId})`);
+    }
+
+    function hidePopup() { 
+      document.getElementById('popupModal').style.display = 'none';
+    }
+
+
+function cancelForm(tableId){
+  document.getElementById('popupModal').style.display = 'none';
+}
+///////////
+async function submitForm(tableElem) {
+  tableId = tableElem.id;
+  const loadingSpinner = document.getElementById('loadingSpinnerPopup');
+  loadingSpinner.style.display = 'block';
+  const form = document.getElementById('popupForm');
+  const headers = tableElem.getElementsByTagName('thead')[0].rows[0].cells;
+  const formData = {};
+
+  // Collect form data
+  for (let i = 0; i < headers.length - 1; i++) {
+    const fieldName = headers[i].textContent;
+    const input = form.elements[fieldName];
+    if (input) {
+      formData[fieldName] = input.value;
+    }
+  }
+  // Update keys and adjust values
+  let postData = updateKeys(formData, tableId);
+
+  if (tableId === 'interfacesTable') {
+    const vlanID = postData['interface'];
+    postData['interface'] = 'vlan_' + vlanID;
+    postData['int_type'] = 'vlan'
+  }
+
+  for (let key in postData) {
+    if (postData[key] === "") {
+      postData[key] = null;
+    }
+    else if (postData[key]==='All'){
+      postData[key]=null;
+    } 
+    else if (postData[key] === "true") {
+      postData[key] = true;
+    } else if (postData[key] === "false") {
+      postData[key] = false;
+    } else if (postData[key] === "eth0") {
+      postData[key] = "pnet";
+    } else if (postData[key] === "eth1") {
+      postData[key] = "lnet";
+    }
+  }
+
+  // Define API endpoint based on tableId
+  let pendpoint = '';
+  switch (tableId) {
+    case 'interfacesTable':
+      pendpoint = '/firewall/fw/interfaces';
+      break;
+    case 'staticRoutesTable':
+      pendpoint = '/firewall/fw/routes';
+      break;
+    case 'firewallTable':
+      pendpoint = '/firewall/fw/rules';
+      break;
+    default:
+      alert('Unknown table type!');
+      return;
+  }
+  console.log(postData)
+  try {
+    if (tableId == 'interfacesTable' && postData['is_provider']==true &&(postData['priority'] < 1|| postData['priority']==null || postData['gateway']==null)){
+      throw new Error('Invalid priority or gateway input')
+    }
+    if (tableId == 'firewallTable' && (postData['fworder'] < 1|| postData['fworder']==null)){
+      throw new Error('Invalid order input')
+    }
+    if (tableId == 'interfacesTable' && postData['is_provider']==false && (postData['priority'] !=null || postData['gateway'] !=null)){
+      throw new Error('Cannot set false provider with not null priority')
+    }
+    if (tableId == 'interfacesTable' && postData['is_dhcp']==true && (postData['dhcp_start']==null || postData['dhcp_end']==null)){
+      throw new Error('Invalind dhcp entries')
+    }
+    if (tableId == 'interfacesTable' && postData['is_dhcp']==false && (postData['dhcp_start']!=null || postData['dhcp_end']!=null)){
+      throw new Error('Invalind dhcp entries')
+    }
+    if (tableId == 'interfacesTable' && postData['is_provider']==true){
+      const validPrio = validate_priorities(postData,interfaces_obj)
+      if (validPrio=='error'){throw new Error('Invalid priority. Same priority value is used for another provider')}
+    }
+    if (tableId == 'interfacesTable'){
+      if (formData['Name'] < 2 || formData['Name'] > 4094){throw new Error ('Invalid Vlan id. Vlan id valid range 2-4094')}
+      const validName = validate_name(formData['Name'],interfaces_obj)
+      if (validName=='error'){throw new Error('Vlan id already in use')}
+      if (postData['ip'].includes('/')){}
+      else{ throw new Error('Interface IP should include prefix (e.g. 192.168.50.1/24)')}
+    }
+    if (tableId=='staticRoutesTable'){
+      if (postData['network']==null || postData['gateway']==null){throw new Error('Static routes cannot contain null values')}
+    }
+    // Send the POST request
+    const response = await fetch(pendpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(postData),
+    });
+
+    if (response.ok) {
+      // Update the table
+      alert('Insert successful!');
+      refresh_object(tableId)
+      populateTable(tableId); // Refresh the specific table
+    } else {
+      const errorData = await response.json();
+      let errorMessage = errorData.msg.split(':').pop().trim() || `Error: ${response.statusText}`; //Provide generic error (e.g. bad request in case error is not defined)
+      throw new Error(errorMessage);
+    }
+  } catch (error) {
+    if (error.name.includes('Syntax')){
+      error='Syntax error, please check your input'
+    }
+    console.error('Error inserting data:', error);
+    alert(`Failed to insert data. ${error}`);
+  }
+  loadingSpinner.style.display = 'none';
+  hidePopup();
+}
+////////////////////
+
+
+async function deleteRow(button) {
+  const loadingSpinner = document.getElementById('loadingSpinnerDel');
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.style.display = 'block';
+  loadingSpinner.style.display = 'block';
+  const buttonId =button.id
+  const deleteId = buttonId.split('_').pop();
+  const tableType = buttonId.split('_')[1];
+  let dendpoint = '';
+  switch (tableType) {
+    case 'interfacesTable':
+      dendpoint = `/firewall/fw/interfaces/${deleteId}`;
+      break;
+    case 'staticRoutesTable':
+      dendpoint = `/firewall/fw/routes/${deleteId}`;
+      break;
+    case 'firewallTable':
+      dendpoint = `/firewall/fw/rules/${deleteId}`;
+      break;
+    default:
+    alert('Unknown table type!');
+    return;
+  }
+  try {
+    // Send the Delete request
+    const response = await fetch(dendpoint, { method: 'DELETE' });
+    if (response.ok) {
+      // If the response is successful, update the table
+      alert('Delete successful!');
+      refresh_object(tableType)
+      populateTable(tableType);
+    } else {
+      const errorData = await response.json();
+      const errorMessage = errorData.msg || `Error: ${response.statusText}`; //Provide generic error (e.g. bad request in case error is not defined)
+      throw new Error(errorMessage);    }
+  } catch (error) {
+    console.error('Error deleting data:', error);
+    refresh_object(tableType)
+    populateTable(tableType);
+    alert(`Failed to Delete data. ${error}`);
+  }
+  loadingSpinner.style.display = 'none';
+  overlay.style.display = 'block';
+
+
+}
+
+/////////////////////////////////////////////
+function updateRow(button) {
+  // Get the table row associated with the button
+  const buttonId =button.id
+  const updateId = buttonId.split('_').pop();
+  const tableType = buttonId.split('_')[1];
+  const row = button.parentElement.parentElement;
+  const cells = row.getElementsByTagName('td');
+  const table = button.closest('table');
+  const headers = table.querySelectorAll('th'); // Get column headers
+  // Extract the row's data into an object
+  const rowObject = {};
+  headers.forEach((header, index) => {
+    const key = header.textContent.trim();
+    if (index < cells.length) {
+      rowObject[key] = cells[index].textContent.trim();
+    }
+  });
+
+
+  // Reference the modal and form
+  const modal = document.getElementById('editModalup');
+  const form = document.getElementById('editFormup');
+  form.innerHTML = ''; // Clear previous content
+
+
+
+  const dropdownKeys = ['Provider', 'DHCP', 'Action', 'Protocol', 'Masquerade'];
+  const dropdownOptions = {
+    'Provider': ['true', 'false'],
+    'DHCP': ['true', 'false'],
+    'Action': ['ACCEPT','DNAT','DROP', 'REJECT'],
+    'Protocol': ['TCP', 'UDP', 'ICMP', 'TCP/UDP'],
+    'Masquerade':['true','false']
+  };
+  const interfaceOptions = ['Interface','Src Interface','Dst Interface','Parent']
+  const numberOptions = ['Priority','Order']
+  const nonEditableKeys = ['Name', 'Type'];
+  const skipKeys = ['Actions'];
+  for (const [key, value] of Object.entries(rowObject)) {
+    const label = document.createElement('label');
+    label.textContent = key;
+
+    let input;
+    if  (skipKeys.includes(key)) {
+      continue; // Skip this field
+    }
+    else if (key === 'Parent' && (rowObject['Name'] === 'eth0' || rowObject['Name'] === 'eth1') || rowObject['Name'] === 'cnet'){
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = value;
+      input.disabled = true; // Make it non-editable
+    }
+    else if (dropdownKeys.includes(key)) {
+      input = document.createElement('select');
+      input.name = key;
+      const options = dropdownOptions[key] || []; // Use predefined options if available
+      options.forEach(optionValue => {
+        const option = document.createElement('option');
+        option.value = optionValue;
+        option.textContent = optionValue;
+        option.selected = optionValue === value; // Pre-select the current value
+        input.appendChild(option);
+      })
+    }
+    else if (key=='Parent'){
+     input = document.createElement('select');
+     intvalues =['eth0','eth1']
+     for (let ival of intvalues){
+     const option=document.createElement('option')
+     option.value=ival
+     option.textContent=ival
+     input.appendChild(option)
+     }}
+    else if (interfaceOptions.includes(key)) {
+      input = document.createElement('select');
+      let int_keys = Object.keys(interfaces_obj)
+      if (key=='Src Interface' || key=='Dst Interface'){
+        const optionall =document.createElement('option');
+        optionall.value = 'All'
+        optionall.textContent = 'All'
+        input.appendChild(optionall);
+      }
+      for (const intkey of int_keys) {
+        const option = document.createElement('option');
+        option.value = interfaces_obj[intkey]['Name']
+        option.textContent = interfaces_obj[intkey]['Name']
+        option.selected = option.value === value;
+        input.appendChild(option);
+        };  
+      } 
+    else if (nonEditableKeys.includes(key)){
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = value;
+      input.disabled = true; // Make it non-editable
+    }
+    else if (numberOptions.includes(key)){
+      input = document.createElement('input');
+      input.type = 'number';
+      input.min = 1;
+      input.value = value;
+    }
+    else {
+      // Create a text input for other keys
+      input = document.createElement('input');
+      input.type = 'text';
+      input.value = value !== null ? value : '';
+    }
+
+    input.name = key;
+    input.dataset.key = key;
+
+    form.appendChild(label);
+    form.appendChild(input);
+    form.appendChild(document.createElement('br'));
+  }
+
+  modal.style.display = 'block';
+  document.getElementById('submitEdit').onclick = async function () {
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  loadingSpinner.style.display = 'block';
+  const formData = new FormData(form);
+  const updatedData = {};
+  formData.forEach((value, key) => {
+    updatedData[key] = value;
+  });
+  let putData= {};
+  putData = updateKeys(updatedData,tableType)
+  for (let val in putData){
+    if (putData[val] === "") {
+    putData[val] = null;
+    }
+    else if (putData[val]==='All'){
+    putData[val]=null;
+    } 
+    else if (putData[val] === "true"){
+    putData[val] = true; 
+    }
+    else if (putData[val] === "false"){
+    putData[val] = false;
+    }
+    else if (putData[val] === "eth0"){
+    putData[val] = "pnet"
+    }
+    else if (putData[val] === "eth1"){
+    putData[val] = "lnet"
+    }
+  }
+  // Define API endpoint and payload
+  let uendpoint = '';
+  switch (tableType) {
+    case 'interfacesTable':
+      uendpoint = `/firewall/fw/interfaces/${updateId}`;
+      break;
+    case 'staticRoutesTable':
+      uendpoint = `/firewall/fw/routes/${updateId}`;
+      break;
+    case 'firewallTable':
+      uendpoint = `/firewall/fw/rules/${updateId}`;
+      break;
+    default:
+      alert('Unknown table type!');
+      return;
+  }
+
+  console.log(putData)
+  try {
+    // Send the PUT request
+    if (tableType == 'interfacesTable' && putData['is_provider']==true &&(putData['priority'] < 1|| putData['priority']==null || putData['gateway'] ==null)){
+      throw new Error('Invalid priority or gateway input')
+    }
+   if (tableType == 'firewallTable' && (putData['fworder'] < 1|| putData['fworder']==null)){
+      throw new Error('Invalid order input')
+    }
+    if (tableType == 'interfacesTable' && putData['is_provider']==false && (putData['priority']!=null || putData['gateway'] !=null)){
+      throw new Error('Cannot set false provider with not null priority or gateway')
+    }
+    if (tableType == 'interfacesTable' && putData['is_dhcp']==true && (putData['dhcp_start']==null || putData['dhcp_end']==null)){
+      throw new Error('Invalind dhcp entries')
+    }
+    if (tableType == 'interfacesTable' && putData['is_dhcp']==false && (putData['dhcp_start']!=null || putData['dhcp_end']!=null)){
+      throw new Error('Invalind dhcp entries')
+    }
+    if (tableType == 'interfacesTable' && putData['is_provider']==true){
+      const validPrio = validate_priorities(putData,interfaces_obj,updateId)
+      if (validPrio=='error'){throw new Error('Invalid priority. Same priority value is used for another provider')}
+    }
+    if (tableType=='interfacesTable'){
+    if (putData['ip'].includes('/')){}
+    else {throw new Error('Interface IP should include prefix (e.g. 192.168.50.1/24)')}
+    }
+    if (tableType=='staticRoutesTable'){
+      if (putData['network']==null || putData['gateway_int']==null){throw new Error('Static routes cannot contain null values')}
+    }
+    const response = await fetch(uendpoint, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(putData),
+    });
+    
+    if (response.ok) {
+      alert('Update successful!');
+      refresh_object(tableType)
+      populateTable(tableType);
+      loadingSpinner.style.display = 'none';
+      modal.style.display = 'none';
+    } else {
+      const errorData = await response.json();
+      let errorMessage = errorData.msg.split(':').pop().trim() || `Error: ${response.statusText}`; //Provide generic error (e.g. bad request in case error is not defined)
+      throw new Error(errorMessage);
+    }
+  } catch (error) {
+    if (error.name.includes('Syntax')){
+      error='Syntax error, please check your input'
+    }
+    console.error('Error inserting data:', error);
+    alert(`Failed to insert data. ${error}`);
+  }
+    loadingSpinner.style.display = 'none';
+    modal.style.display = 'none';
+};
+    
+
+  document.getElementById('cancelEdit').onclick = function () {
+    modal.style.display = 'none'; 
+  };
+}
+
+window.onclick = function (event) {
+  const modal = document.getElementById('editModalup');
+  if (event.target === modal) {
+    modal.style.display = 'none';
+  }
+};
+
+/////////////////////////////////
+    document.addEventListener('DOMContentLoaded', () => {
+      populateTable('interfacesTable');
+      populateTable('staticRoutesTable');
+      populateTable('firewallTable');
+    });
+
+    //Function for pop up field
+    function popfield(fieldname){
+      let inhtml
+      if (fieldname=='Protocol') {
+        inhtml=`
+        <label>${fieldname}:</label> 
+          <select name='${fieldname}'>
+            <option value="TCP">TCP</option>
+            <option value="UDP">UDP</option>
+            <option value="ICMP">ICMP</option>
+            <option value="TCP/UDP">TCP/UDP</option>
+          </select>
+        <br>`
+      }
+      else if (fieldname=='Name'){
+        inhtml=`<label>Vlan:</label><input type='number' name='${fieldname}' min='1' max='4094'><br>`;
+      }      
+      else if (fieldname=='Order' || fieldname=='Priority'){
+        inhtml=`<label>${fieldname}:</label><input type='number' name='${fieldname}' min='1'><br>`;
+      }
+      else if (fieldname=='Type'){
+        inhtml=`<label>${fieldname}:</label><input type="text" disabled=true value="vlan"></input><br>`;
+      }
+      else if (fieldname=='Parent'){
+        inhtml=`<label>${fieldname}:</label>
+          <select name='${fieldname}'>
+            <option value="eth0">eth0</option>
+            <option value="eth1">eth1</option>
+          </select>
+          <br>`;
+      }
+      else if (fieldname=='DHCP' || fieldname=='Provider' || fieldname=='Masquerade'){
+          inhtml=`<label>${fieldname}:</label>
+          <select name='${fieldname}'>
+            <option value="false">false</option>
+            <option value="true">true</option>
+          </select>
+          <br>`;
+      }
+      else if (fieldname=='Action'){
+        inhtml=`<label>${fieldname}:</label>
+          <select name='${fieldname}'>
+            <option value="ACCEPT">ACCEPT</option>
+            <option value="DNAT">DNAT</option>
+            <option value="DROP">DROP</option>
+            <option value="REJECT">REJECT</option>
+          </select>
+          <br>`;
+      }
+      else if (fieldname=='Src Interface' || fieldname=='Dst Interface'){
+        let intstr = `<label for="${fieldname}">${fieldname}:</label><select name="${fieldname}">`;
+        let int_keys = Object.keys(interfaces_obj)
+        intstr += '<option value="All">All</option>'
+        for (const intkey of int_keys) {
+          intstr += `<option value="${interfaces_obj[intkey]['Name']}">${interfaces_obj[intkey]['Name']}</option>`;
+        };
+        intstr += '</select><br>';
+        inhtml = intstr;
+      }
+      else if (fieldname=='Interface'){ //For static routing only
+        let intstr = `<label for="${fieldname}">${fieldname}:</label><select name="${fieldname}">`;
+        let int_keys = Object.keys(interfaces_obj)
+        for (const intkey of int_keys) {
+          intstr += `<option value="${interfaces_obj[intkey]['Name']}">${interfaces_obj[intkey]['Name']}</option>`;
+        };
+        intstr += '</select><br>';
+        inhtml = intstr;
+      }
+      else{
+        inhtml=`<label>${fieldname}:</label><input type='text' name='${fieldname}'><br>`;
+      }
+      return inhtml
+    }
+
+    function interface_name_change(intname){
+      let newname
+      if (intname =='pnet') {newname ='eth0'}
+      else if (intname=='lnet'){ newname ='eth1'}
+      else {newname = intname}
+      return newname
+    }
+
+    function data_list_to_insert(tId,dbinput){
+      let dataobj = {}
+      if (tId=='interfacesTable'){
+          dataobj = {'Name':interface_name_change(dbinput['interface']),'Parent':interface_name_change(dbinput['parent']),
+          'Type':dbinput['int_type'],'IP':dbinput['ip'], 'Provider':dbinput['is_provider'],'Gateway':dbinput['gateway'],'Priority':dbinput['priority'],
+          'DHCP':dbinput['is_dhcp'],'DHCP Start':dbinput['dhcp_start'],'DHCP End':dbinput['dhcp_end'], 'ID': tId+'_'+dbinput['id']}
+      }
+      else if (tId=='staticRoutesTable'){
+          dataobj = {'Network':dbinput['network'],'Interface':interface_name_change(dbinput['gateway_int']),
+          'Gateway IP':dbinput['gateway'],'Masquerade':dbinput['masquerade'], 'ID':tId+'_'+dbinput['id']}
+      }
+      else if (tId='firewallTable'){
+          dataobj = {'Order':dbinput['fworder'],'Action':dbinput['action'],'Protocol':dbinput['protocol'],
+          'Src Interface':interface_name_change(dbinput['src_interface']),'Dst Interface':interface_name_change(dbinput['dst_interface']),'Src IP':dbinput['src_ip'],
+          'Dest IP':dbinput['dst_ip'],'Src Port':dbinput['src_port'],'Dst Port':dbinput['dst_port'],'ID':tId+'_'+dbinput['id']}
+      }
+
+      return dataobj
+    }
+
+    function updateKeys(updatedData,tId){
+      let putData = {}
+      if (tId=='interfacesTable'){
+        putData = {'interface':updatedData['Name'],'int_type':updatedData['Type'],'parent':updatedData['Parent'],
+          'ip':updatedData['IP'],'gateway':updatedData['Gateway'],'is_provider':updatedData['Provider'],'priority':updatedData['Priority'],
+          'is_dhcp':updatedData['DHCP'],'dhcp_start':updatedData['DHCP Start'],'dhcp_end':updatedData['DHCP End']
+        }
+      }
+      else if (tId=='staticRoutesTable'){
+        putData ={'network':updatedData['Network'],'gateway':updatedData['Gateway IP'],'gateway_int':updatedData['Interface'],'masquerade':updatedData['Masquerade']}
+      }
+      else if (tId=='firewallTable'){
+        putData ={'fworder':updatedData['Order'],'action':updatedData['Action'],'protocol':updatedData['Protocol'],'src_interface':updatedData['Src Interface'],
+        'dst_interface':updatedData['Dst Interface'],'src_ip':updatedData['Src IP'],'dst_ip':updatedData['Dest IP'],'src_port':updatedData['Src Port'],'dst_port':updatedData['Dst Port']}
+      }
+      return putData
+    }
+
+    function populate_data_object (tableId, dbdata, rdata){
+            if (tableId=='interfacesTable'){interfaces_obj[dbdata['id']]=rdata}
+            else if (tableId=='firewallTable'){rules_obj[dbdata['id']]=rdata}
+            else if (tableId=='staticRoutesTable'){routes_obj[dbdata['id']]=rdata}
+          }
+    function refresh_object(tablename){
+      if (tablename=='interfacesTable'){interfaces_obj={}}
+      else if (tablename=='firewallTable'){rules_obj={}}
+      else if (tablename=='staticRoutesTable'){routes_obj={}}
+    }
+    function get_endpoint(tableId){
+      let endpoint
+      if (tableId =='interfacesTable'){
+      endpoint = '/firewall/fw/interfaces'
+      }
+      else if (tableId=='staticRoutesTable'){
+        endpoint = '/firewall/fw/routes'}
+      else if (tableId='firewallTable'){
+        endpoint = '/firewall/fw/rules'
+      }
+      else {
+        endpoint ='/firewall/fw/blackhole'
+      }
+      return endpoint;
+    }
+
+    function validate_priorities(postData,interfaces,uid=null){
+      for (let nic in interfaces){
+        if (nic == uid){}//Do validate priority for the same Interface. For some reason != does not work properly
+        else {
+          if (interfaces[nic]['Priority'] == postData['priority']){
+            return 'error'
+          }
+        }
+      }
+      return 'ok'
+    }
+
+    function validate_name(vlanName, interfaces){
+      for (let nic in interfaces){
+        vlanNic = interfaces[nic]['Name'].split('_').pop();
+        if (vlanName == vlanNic){return 'error'}
+      }
+      return 'ok'
+    }
+
+
+
+    
+  </script>
+</body>
+</html>

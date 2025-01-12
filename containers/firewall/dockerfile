@@ -1,0 +1,24 @@
+FROM debian:latest
+
+RUN apt-get update && \
+    apt-get install -y isc-dhcp-server iptables iproute2 net-tools nmap iputils-ping tcpdump python3 python3-pip python3-venv ulogd2 vim procps
+
+RUN mkdir /firewall/
+COPY ./dhcpd.conf.tmpl /firewall/
+COPY ./isc-dhcp-server.tmpl /firewall/
+COPY ./dhcpd.leases /var/lib/dhcp/dhcpd.leases
+RUN python3 -m venv /firewall/venv
+COPY ./ulogd.conf /etc/ulogd.conf
+RUN chmod 600 /etc/ulogd.conf
+COPY ./code/init.env /firewall/init.env
+COPY ./code/db.env /firewall/db.env
+COPY ./code/get_container_interfaces /firewall/
+COPY ./code/requirements.txt /
+COPY ./entrypoint.sh /
+COPY ./code/iptables_gen.py /firewall/
+COPY ./iptables_restore.tmpl /firewall/
+RUN chmod +x /firewall/get_container_interfaces
+RUN chmod +x /firewall/iptables_gen.py
+RUN chmod +x /entrypoint.sh
+RUN /firewall/venv/bin/python3 -m pip install -r /requirements.txt 
+ENTRYPOINT ["/entrypoint.sh"]

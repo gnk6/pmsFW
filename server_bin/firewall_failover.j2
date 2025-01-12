@@ -1,0 +1,23 @@
+#! /usr/bin/env bash
+#
+function br0_ip(){
+	ipadd=$(grep -A1 'br0 inet' /etc/network/interfaces | tail -1 | awk '{ print $2 }') 
+	echo $ipadd
+}
+
+echo 'nameserver 8.8.8.8' > /etc/resolv.conf
+while true;
+do
+	ip route add 1.1.1.1 via 169.254.100.2
+	ping -c2 -I br2 1.1.1.1 > /dev/null 2>&1
+	if [ $? = 0 ]; then
+		ip a del $(br0_ip) dev br0
+		ip route replace default via 169.254.100.2
+		sleep 30
+	else
+		ip a add $(br0_ip) dev br0
+		ip route replace default via {{ server_gw }}
+		sleep 2
+	fi
+
+done

@@ -1,0 +1,14 @@
+[Unit]
+Description=Container network manage
+After=docker.service
+Requires=docker.service
+After=network.target
+
+[Service]
+ExecStart=/firewall/local_api/apienv/bin/waitress-serve --host=169.254.100.1 --port=6000 firewall.local_api.server_app:servapp
+Type=Forking
+PIDFile=/var/run/cnetapi.pid
+Restart=always
+
+[Install]
+WantedBy=default.target
