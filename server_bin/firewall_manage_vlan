@@ -13,7 +13,7 @@ then
 		echo "Error $netname exists"
 		exit 1
 	fi
-	docker network create -d ipvlan --subnet=$net -o parent=$vlan $netname > /dev/null 2>&1
+	docker network create -d macvlan --subnet=$net -o parent=$vlan $netname > /dev/null 2>&1
 	if [ $? -eq 0 ];
 	then	
 		docker network connect $netname rest-firewall-1 > /dev/null 2>&1
@@ -39,7 +39,7 @@ then
 		then
 			net=$3
 			vlan=$4
-			docker network create -d ipvlan --subnet=$net -o parent=$vlan $netname > /dev/null 2>&1
+			docker network create -d macvlan --subnet=$net -o parent=$vlan $netname > /dev/null 2>&1
 			if [ $? -eq 0 ];
 			then	
 				docker network connect $netname rest-firewall-1 > /dev/null 2>&1
