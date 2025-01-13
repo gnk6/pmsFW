@@ -594,6 +594,7 @@ function updateRow(button) {
      const option=document.createElement('option')
      option.value=ival
      option.textContent=ival
+     option.selected=option.value === value;
      input.appendChild(option)
      }}
     else if (interfaceOptions.includes(key)) {
