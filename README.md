@@ -2,7 +2,7 @@
 Containerized firewall system
 
 This repository contains the playbooks and the needed files to deploy the containerized firewall system via ansible.
-Prerequises:
+Prerequisites:
 - Debian 12 server with two physical ethernet adapters
 - Root SSH access on the Debian server with pubkey authentication
 
