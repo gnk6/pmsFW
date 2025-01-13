@@ -8,9 +8,9 @@ Prerequisites:
 
 Playbooks:
 - server_bridge_deploy,yml, is used to create 3 bridge interfaces:
-      - br0 is the predefined interface used to communicate with the public network
-      - br1 is the predefined interface used to communicate with the local network
-      - br2 is the non-editable interface used for the link-local communication between the containers and the server
+        br0 is the predefined interface used to communicate with the public network
+        br1 is the predefined interface used to communicate with the local network
+        br2 is the non-editable interface used for the link-local communication between the containers and the server
 - firewall_deploy.yml is used to deplpoy the three system contaienrs and the server systemd services:
      - containers:
         - rest-firewall container provides the firewall functionalities (firewall rules, network interfaces management, static routing e.g.) 
