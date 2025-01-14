@@ -13,10 +13,12 @@
 -A FORWARD -d 169.254.100.4 -p tcp -m tcp --dport 80 -m state --state NEW,RELATED -j ACCEPT
 -A FORWARD -d 169.254.100.4 -p tcp -m tcp --dport 443 -m state --state NEW,RELATED -j ACCEPT
 ##API GENERATED RULES##
+##Allow access from server
+{% for intgw in providers %}
+-A FORWARD -s 169.254.100.1 -o {{ intgw }} -j ACCEPT
+{% endfor %}
+##User defined rules
 {% for rule in fw_rules %}
-{% if rule.pnet %}
--A FORWARD -s 169.254.100.1 -o {{ rule.pnet }} -j ACCEPT
-{% endif %}
 {% if rule.action == 'ACCEPT' or rule.action == 'DNAT' %}
 {% if rule.protocol == 'TCP/UDP' %}
 -A FORWARD -p tcp{% if rule.src_interface %} -i {{ rule.src_interface }}{% endif %}{% if rule.dst_interface%} -o {{ rule.dst_interface }}{% endif %}{% if rule.src_ip %} -s {{ rule.src_ip }}{% endif %}{% if rule.dst_ip %} -d {{ rule.dst_ip }}{% endif %}{% if rule.src_port %} --sport {{ rule.src_port }}{% endif %}{% if rule.dst_port %} --dport {{ rule.dst_port }}{% endif %}{%if rule.action == 'DNAT'%} -m state --state NEW,RELATED{% endif %} -j ACCEPT
