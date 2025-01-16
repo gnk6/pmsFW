@@ -1,0 +1,9 @@
+/firewall/logs/iptables.log {
+dateformat - %Y%m%d%s
+size=10000k
+rotate 5
+copytruncate
+missingok
+compress
+compressext .gz
+}

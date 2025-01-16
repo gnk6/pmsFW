@@ -1,9 +1,13 @@
 FROM debian:latest
 
 RUN apt-get update && \
-    apt-get install -y isc-dhcp-server iptables iproute2 net-tools nmap iputils-ping tcpdump python3 python3-pip python3-venv ulogd2 vim procps
+    apt-get install -y isc-dhcp-server iptables iproute2 net-tools nmap iputils-ping tcpdump python3 python3-pip python3-venv ulogd2 vim logrotate procps
 
 RUN mkdir /firewall/
+RUN mkdir /firewall/logs
+COPY ./resolv.conf /etc/resolv/conf
+COPY ./firewallapprotate /etc/logrotate.d/
+COPY ./iptablesrotate /etc/logrotate.d/
 COPY ./dhcpd.conf.tmpl /firewall/
 COPY ./isc-dhcp-server.tmpl /firewall/
 COPY ./dhcpd.leases /var/lib/dhcp/dhcpd.leases

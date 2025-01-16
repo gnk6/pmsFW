@@ -11,10 +11,10 @@ import logging
 from ipaddress import IPv4Address, IPv4Network, IPv4Interface
 
 
-logging.basicConfig(filename='/firewall/firewall_app.log', format='%(asctime)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %H:%M:%S', level=logging.DEBUG)
+logging.basicConfig(filename='/firewall/logs/firewall_app.log', format='%(asctime)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %H:%M:%S', level=logging.DEBUG)
 
 app = Flask(__name__)
-dburl = "postgresql://{{ psql_user }}:{{ psql_pass }}@169.254.100.3/firewalldb"
+dburl = "postgresql://postgres:postgres123@169.254.100.3/firewalldb"
 engine = create_engine(dburl)
 
 class interfaces(SQLModel,table=True):
