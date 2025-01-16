@@ -7,7 +7,7 @@
       copy:
        src: "{{ item }}"
        dest: /usr/local/bin/
-       mode: 0777
+       mode: 777
       loop:
         - server_bin/firewall_manage_vlan
         - server_bin/firewall_prune
@@ -57,25 +57,25 @@
       loop:
         - source: server_bin/firewall_failover.j2
           destination: /usr/local/bin/firewall_failover
-          perm: 0777
+          perm: 777
         - source: containers/docker-compose.yaml.j2
           destination: /firewall/docker-compose.yaml
-          perm: 0644
+          perm: 644
         - source: containers/firewall/entrypoint.sh
           destination: /firewall/firewall/entrypoint.sh
-          perm: 0644
+          perm: 644
         - source: containers/firewall/code/init.env
           destination: /firewall/firewall/code/init.env
-          perm: 0644
+          perm: 644
         - source: containers/firewall/code/db.env
           destination: /firewall/firewall/code/db.env
-          perm: 0644
+          perm: 644
         - source: containers/firewall/code/iptables_gen.py
           destination: /firewall/firewall/code/iptables_gen.py
-          perm: 0777
+          perm: 777
         - source: containers/websrv/web.py
           destination: /firewall/websrv/web.py
-          perm: 0777
+          perm: 777
     - name: Create venv
       command:
         cmd: python3 -m venv apienv
@@ -88,7 +88,7 @@
       copy:
         src: "{{ item }}"
         dest: /usr/lib/systemd/system/
-        mode: 0644
+        mode: 644
       loop:
         - server_etc/cnetapi.service
         - server_etc/firewall_failover.service
