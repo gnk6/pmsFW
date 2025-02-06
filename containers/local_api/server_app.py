@@ -24,7 +24,7 @@ def create_container_net(vlan):
     elif vlan['action'] == 'update':
         msg = os.popen(f'/usr/local/bin/firewall_manage_vlan update {dnetname} {dnetwork} {srvint}').read().strip()
         if 'Error' in msg:
-            raise Exception(f'Could not delete vlan. {msg}')
+            raise Exception(f'Could not update vlan. {msg}')
     elif vlan['action'] == 'delete':
         msg = os.popen(f'/usr/local/bin/firewall_manage_vlan delete {dnetname}').read().strip()
         if 'Error' in msg:
