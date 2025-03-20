@@ -8,10 +8,6 @@
 -A INPUT -p icmp -j ACCEPT
 -A INPUT -j NFLOG --nflog-prefix 'INPUT-DROP'
 -A FORWARD -m state --state ESTABLISHED -j ACCEPT
--A FORWARD -d 169.254.100.1 -p tcp -m tcp --dport 22 -m state --state NEW,RELATED -j ACCEPT
--A FORWARD -d 169.254.100.3 -p tcp -m tcp --dport 5432 -m state --state NEW,RELATED -j ACCEPT
--A FORWARD -d 169.254.100.4 -p tcp -m tcp --dport 80 -m state --state NEW,RELATED -j ACCEPT
--A FORWARD -d 169.254.100.4 -p tcp -m tcp --dport 443 -m state --state NEW,RELATED -j ACCEPT
 ##API GENERATED RULES##
 ##Allow access from server
 {% for intgw in providers %}
@@ -36,6 +32,10 @@
 {% endif %}
 {% endif %}
 {% endfor %}
+-A FORWARD -d 169.254.100.4 -p tcp -m tcp --dport 80 -m state --state NEW,RELATED -j ACCEPT
+-A FORWARD -d 169.254.100.4 -p tcp -m tcp --dport 443 -m state --state NEW,RELATED -j ACCEPT
+-A FORWARD -d 169.254.100.1 -p tcp -m tcp --dport 22 -m state --state NEW,RELATED -j ACCEPT
+-A FORWARD -d 169.254.100.3 -p tcp -m tcp --dport 5432 -m state --state NEW,RELATED -j ACCEPT
 -A FORWARD -j NFLOG --nflog-prefix 'FORWARD-DROP'
 ##END OF API GENERATED RULES##
 COMMIT
@@ -58,9 +58,14 @@ COMMIT
 #GW configuration
 -A POSTROUTING -o {{ intgw }} -j MASQUERADE
 -A PREROUTING -i {{ intgw }} -p tcp -m tcp --dport 2222 -j DNAT --to-destination 169.254.100.1:22 
--A PREROUTING -i {{ intgw }} -p tcp -m tcp --dport 5432 -j DNAT --to-destination 169.254.100.3:5432 
 -A PREROUTING -i {{ intgw }} -p tcp -m tcp --dport 80 -j DNAT --to-destination 169.254.100.4:80 
 -A PREROUTING -i {{ intgw }} -p tcp -m tcp --dport 443 -j DNAT --to-destination 169.254.100.4:443 
+{% endfor %}
+#Listen for local ips
+{% for lip in llocals %}
+-A PREROUTING -i {{ lip.iface }} -d {{ lip.ip }} -p tcp -m tcp --dport 80 -j DNAT --to-destination 169.254.100.4:80 
+-A PREROUTING -i {{ lip.iface }} -d {{ lip.ip }} -p tcp -m tcp --dport 443 -j DNAT --to-destination 169.254.100.4:443
+-A PREROUTING -i {{ lip.iface }} -d {{ lip.ip }} -p tcp -m tcp --dport 22 -j DNAT --to-destination 169.254.100.4:22
 {% endfor %}
 #MASQ for static routing
 {% for route in routes %}
@@ -84,4 +89,3 @@ COMMIT
 {% endfor %}
 ##END OF API GENERATED RULES##
 COMMIT
-

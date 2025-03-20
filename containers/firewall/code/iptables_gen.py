@@ -399,12 +399,30 @@ def route_update_with_correct_interface(sroute_list,active_int_dict):
     #logging.debug(sroute_list)
     return sroute_list
 
+def locals_update_with_correct_interfaces(flocals, active_int_dict):
+    final_local_ls = []
+    for ldata in flocals:
+        #create a list that combines local ips with local interfaces
+        final_local_ls.append({'iface':active_int_dict[list(ldata.keys())[0]],'ip':list(ldata.values())[0]})
+    logging.debug(final_local_ls)
+    return final_local_ls
+
+def get_locals_to_listen():
+    with Session(engine) as session:
+        rlocals = session.exec(select(interfaces.ip, interfaces.interface).where(interfaces.is_provider==False).where(interfaces.ip!='169.254.100.2/29')).all()
+        flocals=[]
+        #remove prexix from ip e.g. /24 and create a dict for each entry
+        for rip in rlocals:
+            flocals.append({rip[1]:rip[0].split('/')[0]})
+        return flocals
+
 def create_template(rule_list,sroute_list):
     templateLoader = jinja2.FileSystemLoader(searchpath='/firewall/')
     templateENV = jinja2.Environment(loader=templateLoader)
     logging.debug(sroute_list)
     fwtmpl = "iptables_restore.tmpl"
     active_int_dict = get_active_interfaces()
+    local_ips = locals_update_with_correct_interfaces(get_locals_to_listen(),active_int_dict)
     for rule in rule_list:
         update_rules_with_the_correct_interfaces(rule,active_int_dict)
         add_extra_value_for_dnat(rule)
@@ -412,7 +430,7 @@ def create_template(rule_list,sroute_list):
     updated_sroute_list=route_update_with_correct_interface(sroute_list,active_int_dict)
     template = templateENV.get_template(fwtmpl)
     providers_list = get_providers()
-    fw_rules = template.render(fw_rules=rule_list,providers=providers_list,routes=updated_sroute_list)
+    fw_rules = template.render(fw_rules=rule_list,providers=providers_list,routes=updated_sroute_list,llocals=local_ips)
     fw_rules_ls = fw_rules.splitlines()
     fw_rules_ls_with_empty_lines_removed = [ line for line in fw_rules_ls if line.strip() ]
     fw_rules_ls_stipped = '\n'.join([ line.strip() for line in fw_rules_ls_with_empty_lines_removed])
@@ -541,4 +559,3 @@ def gen_config():
 if __name__ == '__main__':
     init_config()
     #app.run(host='0.0.0.0',port=6000,debug=True)
-
