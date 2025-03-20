@@ -716,7 +716,7 @@ function updateRow(button) {
     else {throw new Error('Interface IP should include prefix (e.g. 192.168.50.1/24)')}
     }
     if (tableType=='staticRoutesTable'){
-      if (putData['network']==null || putData['gateway_int']==null){throw new Error('Static routes cannot contain null values')}
+      if (putData['network']==null || putData['gateway']==null){throw new Error('Static routes cannot contain null values')}
     }
     const response = await fetch(uendpoint, {
       method: 'PUT',
