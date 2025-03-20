@@ -115,10 +115,12 @@ def update_firewall_rule(rid, apival: firewall_rules):
             raise Exception
         for rkey, rval in rcollumn.items():
             print(rkey,rval)
-            if rval or (rkey =='src_interface' or rkey =='dst_interface') : ##Fix for null src and dst interface, option ALL on wgui
-                #Collect current attributes
-                fallback_data[rkey]=getattr(fwdata,rkey)
-                setattr(fwdata, rkey, rval)
+            #if rval or (rkey =='src_interface' or rkey =='dst_interface') : ##Fix for null src and dst interface, option ALL on wgui
+            #Collect current attributes
+            if rkey == 'id':
+                continue
+            fallback_data[rkey]=getattr(fwdata,rkey)
+            setattr(fwdata, rkey, rval)
         print(fwdata)
         session.add(fwdata)
         session.commit()
