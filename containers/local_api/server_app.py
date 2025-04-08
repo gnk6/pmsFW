@@ -52,7 +52,7 @@ def create_vlan():
     except Exception as error:
         print(error)
         return jsonify({'error':str(error)}), 400
-    
+
 
 @servapp.route('/vlan/<vlanid>', methods=['PUT'])
 def update_vlan(vlanid):
@@ -77,7 +77,7 @@ def delete_vlan(vlanid):
         return jsonify({'success': vlan_delete}), 200
     except Exception as error:
         return jsonify({'error':str(error)}), 400
-    
 
-if __name__ == '__main__':
-    servapp.run(host='0.0.0.0',port=6000,debug=True)
+
+#if __name__ == '__main__':
+#    servapp.run(host='0.0.0.0',port=6000,debug=True)
