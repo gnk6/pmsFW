@@ -14,7 +14,7 @@ from ipaddress import IPv4Address, IPv4Network, IPv4Interface
 logging.basicConfig(filename='/firewall/logs/firewall_app.log', format='%(asctime)s - %(levelname)s - %(message)s',datefmt='%Y-%m-%d %H:%M:%S', level=logging.DEBUG)
 
 app = Flask(__name__)
-dburl = "postgresql://{{ psql_user }}:{{ psql_pass }}@169.254.100.3/firewalldb"
+dburl = "postgresql://pqluser:psqlpass@169.254.100.3/firewalldb"
 engine = create_engine(dburl)
 
 class interfaces(SQLModel,table=True):
@@ -56,10 +56,19 @@ class static_routes(SQLModel, table=True):
 
 SQLModel.metadata.create_all(engine)
 
-#FLAG
-def validate_address(intip=None,gwlist=None,sip=None,route=False,interface=None):
+def validate_address(intip=None,gwlist=None,sip=None,route=False,interface=None,allint=None):
+    #Extra care for duplicate networks
+    if allint:
+        ip_address_to_check = IPv4Interface(interface['ip'])
+        for diface in allint:
+            if interface['interface']==diface['interface']:
+                continue
+            existing_net = IPv4Interface(diface['ip']).network
+            if ip_address_to_check.network.overlaps(existing_net):
+                raise Exception('Interface ip cannot belong to a defined network')
+        return
     #Validate interface's ip address format 192.168.0.5/24
-    if intip:
+    elif intip:
         if IPv4Interface(intip):
             if str(IPv4Interface(intip)) == str(IPv4Interface(intip).network) and route==False:
                 raise Exception('Interface ip cannot be network')
@@ -226,9 +235,16 @@ def dhcp_config(interfaces,ifconfig):
     return
 
 def apply_vlan_config_on_server(interface):
-    srvurl = 'http://169.254.100.1:6000/vlanconfig'
     headers = {"Content-type":"Application/json"}
-    api_call = requests.post(srvurl, headers=headers, json=interface)
+    if interface['action'] == 'delete':
+        srvurl = f"http://169.254.100.1:6000/vlan/{interface['interface']}"
+        api_call = requests.delete(srvurl)
+    elif interface['action'] == 'update':
+        srvurl = f"http://169.254.100.1:6000/vlan/{interface['interface']}"
+        api_call = requests.put(srvurl, headers=headers, json=interface)
+    else:
+        srvurl = 'http://169.254.100.1:6000/vlan'
+        api_call = requests.post(srvurl, headers=headers, json=interface)
     return api_call
 
 def apply_vlan_ip_on_firewall(interface,ifconfig):
@@ -326,7 +342,7 @@ def apply_system_config(interfaces_dictionaries,system_init=None, action=None):
     if not interfaces_dictionaries:
         logging.info('No config found to apply. Applying default settings.')
         ##Change hardcoded ip
-        os.system('/usr/sbin/ip route replace default via {{ server_gw }}')
+        os.system('/usr/sbin/ip route replace default via 10.0.48.1')
         return 'OK'
     ifconfig = get_active_ip(system_init)
     dhcp_interfaces=[]
@@ -334,6 +350,8 @@ def apply_system_config(interfaces_dictionaries,system_init=None, action=None):
         try:
             #Validate_ip_addresses
             validate_address(intip=dinterface['ip'])
+            #Prevent duplicate networks
+            validate_address(interface=dinterface, allint=interfaces_dictionaries)
             if dinterface['is_provider']:
                 gateway_list=[dinterface['gateway'],dinterface['ip']]
                 validate_address(gwlist=gateway_list)
@@ -545,7 +563,10 @@ def gen_config():
     if command['action'] == 'gen_rules':
         return api_gen_firewall()
     elif command['action'] == 'gen_int':
-        return api_gen_int('create')
+        cmsg=api_gen_int('create')
+        if 'Error' in cmsg:
+            return cmsg
+        return api_gen_firewall()
     elif command['action'] == 'update_int' or command['action'] == 'delete_int':
         act=command['action'].split('_')[0]
         imsg=api_gen_int(act)
