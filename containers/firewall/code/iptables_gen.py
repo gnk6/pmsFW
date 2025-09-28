@@ -342,7 +342,7 @@ def apply_system_config(interfaces_dictionaries,system_init=None, action=None):
     if not interfaces_dictionaries:
         logging.info('No config found to apply. Applying default settings.')
         ##Change hardcoded ip
-        os.system('/usr/sbin/ip route replace default via 10.0.48.1')
+        os.system('/usr/sbin/ip route replace default via {{ server_gw }}')
         return 'OK'
     ifconfig = get_active_ip(system_init)
     dhcp_interfaces=[]
